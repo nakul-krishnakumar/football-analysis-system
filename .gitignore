@@ -1,0 +1,4 @@
+.venv/
+runs/
+training/football-players-detection-1
+yolov8x.pt

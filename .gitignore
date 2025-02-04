@@ -1,4 +1,8 @@
 .venv/
+.env*
+models/
 runs/
 training/football-players-detection-1
+yolov5xu.pt
 yolov8x.pt
+yolov11n.pt

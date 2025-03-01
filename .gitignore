@@ -2,6 +2,7 @@
 .env*
 models/
 runs/
+output_videos/
 training/football-players-detection-1
 yolov5xu.pt
 yolov8x.pt

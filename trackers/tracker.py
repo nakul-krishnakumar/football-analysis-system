@@ -1,5 +1,6 @@
 from ultralytics import YOLO
 import supervision as sv
+import numpy as np
 import pickle
 import cv2
 import os
@@ -108,11 +109,11 @@ class Tracker:
                 pickle.dump(tracks, f)
         return tracks
     
-    def draw_ellipse(self, frame, bbox, color, track_id):
+    def draw_ellipse(self, frame, bbox, color, track_id=None):
         """
             This function is used to draw the ellipse under each player in each frame
         """
-        y2 = int(bbox[3])
+        y_bottom = int(bbox[3])
         x_center, _ = get_bbox_center(bbox)
         x_center = int(x_center)
 
@@ -120,7 +121,7 @@ class Tracker:
 
         cv2.ellipse(
             frame,
-            center=(x_center, y2),
+            center=(x_center, y_bottom),
             axes=(int(width), int(0.35*width)),
             angle=0.0,
             startAngle=-45, # the line starts from -45deg
@@ -131,7 +132,63 @@ class Tracker:
             lineType=cv2.LINE_4
         )
 
+        reactangle_width = 40
+        reactangle_height = 20
+
+        x1_rect = x_center - reactangle_width//2
+        x2_rect = x_center + reactangle_width//2
+
+        y1_rect = (y_bottom - reactangle_height//2) + 15
+        y2_rect = (y_bottom + reactangle_height//2) + 15
+
+        if track_id is not None:
+            cv2.rectangle(
+                frame,
+                (int(x1_rect), int(y1_rect)),
+                (int(x2_rect), int(y2_rect)),
+                color,
+                cv2.FILLED,
+            )
+
+            x1_text = x1_rect + 12
+            if track_id > 99:
+                x1_text -= 10 # if its a 3 digit number, then text starts 10 pixels before from the left
+
+            cv2.putText(
+                frame,
+                f"{track_id}",
+                (int(x1_text), int(y1_rect + 15)),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.6,
+                (0,0,0),
+                2
+            )
+
         return frame
+
+    def draw_triangle(self, frame, bbox, color):
+        """
+            This function is used to draw the triangle over the ball in each frame
+        """
+
+        y_top = int(bbox[1]) # y1
+
+        x_center, _ = get_bbox_center(bbox)
+        x_center = int(x_center)
+
+        width = get_bbox_width(bbox)
+
+        p1 = [x_center, y_top]
+        p2 = [x_center - 12, y_top - 20]
+        p3 = [x_center + 12, y_top - 20]
+        pts = np.array([p1, p2, p3], np.int32)
+        pts.reshape((-1, 1, 2))
+
+        cv2.drawContours(frame, [pts], 0, color, cv2.FILLED)
+        cv2.drawContours(frame, [pts], 0, (0,0,0), 2)
+
+        return frame
+
 
     def draw_annotations(self, video_frames, tracks, output_video_path):
         """
@@ -149,7 +206,7 @@ class Tracker:
             referee_dict = tracks["referees"][frame_num]
             ball_dict = tracks["ball"][frame_num]
 
-            # Draw ellipse under each player in each frame
+            # Draw Players
             for track_id, player in player_dict.items():
                 """
                     track_id -> index of the player
@@ -160,9 +217,15 @@ class Tracker:
 
                 color = (0, 0, 255) # color of the ellipse
                 frame = self.draw_ellipse(frame, player["bbox"], color, track_id)
-                # Each frame is edited and updated player by player,
-                # i.e, ellipse is drawn under player1 first and frame is updated with this ellipse,
-                # then this updated frame is again updated with ellipse under player2 and so on.
+            
+            # Draw Referees
+            for _, referee in referee_dict.items():
+                color = (0, 255, 255)
+                frame = self.draw_ellipse(frame, referee["bbox"], color)
+
+            for _, ball in ball_dict.items():
+                color = (0, 255, 0)
+                frame = self.draw_triangle(frame, ball["bbox"], color)
 
             print("Frame done", frame_num)
             out.write(frame)

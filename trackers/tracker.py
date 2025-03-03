@@ -215,7 +215,7 @@ class Tracker:
                     player["bbox"] -> x1,y1,x2,y2 coordinates of the players bounding box
                 """
 
-                color = (0, 0, 255) # color of the ellipse
+                color = player.get("team_color", (0, 0, 255)) # color of the ellipse
                 frame = self.draw_ellipse(frame, player["bbox"], color, track_id)
             
             # Draw Referees

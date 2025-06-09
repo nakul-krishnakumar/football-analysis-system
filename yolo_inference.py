@@ -1,10 +1,10 @@
 from ultralytics import YOLO
 
-model = YOLO('models/best.pt')
+model = YOLO('yolov8x')
 
 print(f"Model info:\n{model.info}")
 
-results = model.predict('input_videos/08fd33_4.mp4', save=True)
+results = model.predict('input_videos/test_video.mp4', save=True)
 print(results[0])
 print(len(results))
 

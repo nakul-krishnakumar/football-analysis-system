@@ -107,6 +107,7 @@ class Tracker:
         if stub_path is not None:
             with open(stub_path, "wb") as f:
                 pickle.dump(tracks, f)
+                
         return tracks
     
     def draw_ellipse(self, frame, bbox, color, track_id=None):
